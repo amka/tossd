@@ -1,12 +1,22 @@
 use log::debug;
+use sqlx::PgPool;
 use tonic::{Request, Response, Status};
 use tonic::codegen::tokio_stream::wrappers::ReceiverStream;
 
 use crate::agreements::{Agreement, AgreementAcceptance, AgreementAcceptanceResponse};
 use crate::agreements::agreements_service_server::AgreementsService;
 
-#[derive(Default)]
-pub struct Agreementer;
+pub struct Agreementer {
+    pool: PgPool,
+}
+
+impl Agreementer {
+    pub fn new(pool: PgPool) -> Self {
+        Self {
+            pool
+        }
+    }
+}
 
 #[tonic::async_trait]
 impl AgreementsService for Agreementer {
