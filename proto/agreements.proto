@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package agreements;
+
+option go_package = "agreements";
+
+// Статус: черновик или опубликован
+enum AgreementStatus {
+  DRAFT = 0;
+  PUBLISHED = 1;
+}
+
+// Соглашение
+message Agreement {
+  //  внутреннее название
+  string internal_name = 1;
+  // публичный заголовок
+  string public_title = 2;
+  // публичный текст в формате html, markdown или plain
+  string public_text = 3;
+  // статус: черновик или опубликован
+  AgreementStatus status = 4;
+  // дату публикации
+  string published_at = 5;
+  // дату создания
+  string created_at = 6;
+  // дату изменения
+  string updated_at = 7;
+  // автора последнего изменения
+  string author_id = 8;
+  // флаг удаления
+  bool deleted = 9;
+}
+
+// состояние принятия соглашения пользователем
+message AgreementAcceptance {
+  // идентификатор соглашения
+  string agreement_id = 1;
+  // идентификатор пользователя
+  string user_id = 2;
+  // флаг принятия
+  bool accepted = 3;
+  // дату принятия
+  string accepted_at = 4;
+}
+
+message AgreementAcceptanceResponse {
+  bool accepted = 1;
+}
+
+// Сервис управления соглашениями
+service AgreementsService {
+  // создает новое соглашение
+  rpc CreateAgreement(Agreement) returns (Agreement);
+  // обновляет существующее соглашение
+  rpc UpdateAgreement(Agreement) returns (Agreement);
+  // удаляет существующее соглашение
+  rpc DeleteAgreement(Agreement) returns (Agreement);
+  // возвращает соглашение по идентификатору
+  rpc GetAgreement(Agreement) returns (Agreement);
+  // возвращает все состояния принятия соглашения для пользователя
+  rpc GetAgreementAcceptances(Agreement) returns (stream AgreementAcceptance);
+  // устанавливает состояние принятия соглашения для пользователя
+  rpc SetAgreementAcceptance(AgreementAcceptance) returns (AgreementAcceptanceResponse);
+}
