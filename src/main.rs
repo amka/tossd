@@ -1,11 +1,11 @@
 use log::info;
+use sea_orm::Database;
 use tonic::transport::Server;
 
 use agreements::agreements_service_server::AgreementsServiceServer;
 use services::agreements::Agreementer;
 
 mod services;
-mod db;
 mod models;
 mod repository;
 
@@ -17,10 +17,14 @@ pub mod agreements {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
 
-    let pool = db::establish_connection().await?;
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
+    // establish database connection
+    let connection = Database::connect(&database_url).await?;
+    // Migrator::up(&connection, None).await?;
 
     let addr = std::env::var("APP_ADDRESS").unwrap_or("127.0.0.1:50051".to_string()).parse()?;
-    let agreementer = Agreementer::new(pool.clone());
+    let agreementer = Agreementer { connection };
 
     info!("Starting gRPC Server at {}", addr);
 
