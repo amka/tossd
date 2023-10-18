@@ -12,6 +12,8 @@ path = "src/main.rs"
 tonic = "0.10"
 prost = { version = "0.12" }
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
+env_logger = { version = "0.10.0", features = [] }
+log = "0.4.20"
 
 [build-dependencies]
 tonic-build = "0.10"
