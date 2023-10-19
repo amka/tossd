@@ -9,53 +9,49 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(AgreementVersions::Table)
+                    .table(AgreementAcceptanceStatus::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(AgreementVersions::Id)
+                        ColumnDef::new(AgreementAcceptanceStatus::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(AgreementVersions::AgreementId).integer().not_null())
+                    .col(ColumnDef::new(AgreementAcceptanceStatus::UserId).big_integer().not_null())
+                    .col(ColumnDef::new(AgreementAcceptanceStatus::ProviderId).integer().not_null())
+                    .col(ColumnDef::new(AgreementAcceptanceStatus::AgreementId).integer().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-agreements-agreement_id")
-                            .from(AgreementVersions::Table, AgreementVersions::AgreementId)
+                            .from(AgreementAcceptanceStatus::Table, AgreementAcceptanceStatus::AgreementId)
                             .to(Agreement::Table, Agreement::Id),
                     )
-                    .col(ColumnDef::new(AgreementVersions::Version).integer().not_null())
-                    .col(ColumnDef::new(AgreementVersions::Title).string().not_null())
-                    .col(ColumnDef::new(AgreementVersions::Content).text().not_null())
-                    .col(ColumnDef::new(AgreementVersions::CreatedAt).timestamp().not_null())
-                    .col(ColumnDef::new(AgreementVersions::UpdatedAt).timestamp().not_null())
-                    .col(ColumnDef::new(AgreementVersions::Deleted).boolean().not_null())
+                    .col(ColumnDef::new(AgreementAcceptanceStatus::Version).integer().not_null())
+                    .col(ColumnDef::new(AgreementAcceptanceStatus::Accepted).boolean().not_null())
+                    .col(ColumnDef::new(AgreementAcceptanceStatus::AcceptedAt).timestamp().not_null())
                     .to_owned(),
             )
-            .await?;
-
-        Ok(())
+            .await
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(AgreementVersions::Table).to_owned())
+            .drop_table(Table::drop().table(AgreementAcceptanceStatus::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-enum AgreementVersions {
+enum AgreementAcceptanceStatus {
     Table,
     Id,
+    UserId,
+    ProviderId,
     AgreementId,
     Version,
-    Title,
-    Content,
-    CreatedAt,
-    UpdatedAt,
-    Deleted,
+    Accepted,
+    AcceptedAt,
 }
 
 #[derive(DeriveIden)]
@@ -63,4 +59,3 @@ enum Agreement {
     Table,
     Id,
 }
-
