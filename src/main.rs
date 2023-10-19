@@ -3,6 +3,7 @@ use sea_orm::Database;
 use tonic::transport::Server;
 
 use agreements::agreements_service_server::AgreementsServiceServer;
+use migration::{Migrator, MigratorTrait};
 use services::agreements::Agreementer;
 
 mod services;
@@ -21,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // establish database connection
     let connection = Database::connect(&database_url).await?;
-    // Migrator::up(&connection, None).await?;
+    Migrator::up(&connection, None).await?;
 
     let addr = std::env::var("APP_ADDRESS").unwrap_or("127.0.0.1:50051".to_string()).parse()?;
     let agreementer = Agreementer { connection };
