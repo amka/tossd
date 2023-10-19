@@ -15,20 +15,21 @@ pub struct Agreementer {
 impl AgreementsService for Agreementer {
     async fn create_agreement(&self, request: Request<Agreement>) -> Result<Response<Agreement>, Status> {
         debug!("Called create_agreement");
-        let conn = &self.connection;
-
-        if let Some(inserted) = AgreementsRepository::add(conn, request.into_inner())
-            .await
-            .ok() {
-            let agreement = Agreement::from_model(inserted.try_into_model().unwrap());
-
-            Ok(Response::new(agreement))
-        } else {
-            Err(Status::new(
-                tonic::Code::Aborted,
-                "Could not insert Agreement",
-            ))
-        }
+        todo!();
+        // let conn = &self.connection;
+        //
+        // if let Some(inserted) = AgreementsRepository::add(conn, request.into_inner())
+        //     .await
+        //     .ok() {
+        //     let agreement = Agreement::from_model(inserted.try_into_model().unwrap());
+        //
+        //     Ok(Response::new(agreement))
+        // } else {
+        //     Err(Status::new(
+        //         tonic::Code::Aborted,
+        //         "Could not insert Agreement",
+        //     ))
+        // }
     }
 
     async fn update_agreement(&self, request: Request<Agreement>) -> Result<Response<Agreement>, Status> {
@@ -43,21 +44,22 @@ impl AgreementsService for Agreementer {
 
     async fn get_agreement(&self, request: Request<GetAgreementRequest>) -> Result<Response<Agreement>, Status> {
         debug!("Called get_agreement");
-        let conn = &self.connection;
-        let id = request.into_inner().id;
-
-        if let Some(model) = AgreementsRepository::find_by_id(conn, id)
-            .await
-            .ok().unwrap() {
-            let agreement = Agreement::from_model(model);
-
-            Ok(Response::new(agreement))
-        } else {
-            Err(Status::new(
-                tonic::Code::Aborted,
-                "Could not find Agreement with id ".to_owned() + &id.to_string(),
-            ))
-        }
+        todo!();
+        // let conn = &self.connection;
+        // let id = request.into_inner().id;
+        //
+        // if let Some(model) = AgreementsRepository::find_by_id(conn, id)
+        //     .await
+        //     .ok().unwrap() {
+        //     let agreement = Agreement::from_model(model);
+        //
+        //     Ok(Response::new(agreement))
+        // } else {
+        //     Err(Status::new(
+        //         tonic::Code::Aborted,
+        //         "Could not find Agreement with id ".to_owned() + &id.to_string(),
+        //     ))
+        // }
     }
 
     type GetAgreementAcceptancesStream = ReceiverStream<Result<AgreementAcceptance, Status>>;

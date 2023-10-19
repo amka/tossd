@@ -2,5 +2,6 @@
 
 pub mod prelude;
 
-pub mod agreement_acceptances;
-pub mod agreements;
+pub mod agreement;
+pub mod agreement_acceptance_status;
+pub mod agreement_versions;
