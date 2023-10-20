@@ -1,7 +1,7 @@
 use log::debug;
 use sea_orm::*;
 
-use crate::agreements::CreateAgreementRequest;
+use crate::agreements::{CreateAgreementRequest, CreateVersionRequest};
 use crate::models::{agreement, agreement_versions};
 use crate::models::agreement_versions::Model;
 
@@ -27,25 +27,25 @@ impl AgreementsRepository {
         agreement.save(db).await
     }
 
-    pub async fn add_version(db: &DbConn, agreement_id: i32, create_agreement: CreateAgreementRequest)
+    pub async fn add_version(db: &DbConn, create_version: CreateVersionRequest)
                              -> Result<agreement_versions::ActiveModel, DbErr>
     {
-        debug!("AgreementsRepository::add_version <- {:?}", agreement_id);
+        debug!("AgreementsRepository::add_version <- {:?}", create_version.agreement_id);
         // Находим все Версии Соглашения, чтобы узнать новый номер Версии.
         let versions = agreement_versions::Entity::find()
-            .filter(agreement_versions::Column::AgreementId.eq(agreement_id))
+            .filter(agreement_versions::Column::AgreementId.eq(create_version.agreement_id))
             .count(db)
             .await?;
 
         let now = chrono::Utc::now().naive_utc();
 
         let version = agreement_versions::ActiveModel {
-            agreement_id: Set(agreement_id),
+            agreement_id: Set(create_version.agreement_id),
             version: Set((versions + 1) as i32),
-            content: Set(create_agreement.content),
+            content: Set(create_version.content),
             created_at: Set(now),
             updated_at: Set(now),
-            author_id: Set(create_agreement.author_id),
+            author_id: Set(create_version.author_id),
             deleted: Set(false),
             ..Default::default()
         };

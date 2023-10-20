@@ -6,9 +6,10 @@ import "google/protobuf/timestamp.proto";
 
 service AgreementService {
   rpc CreateAgreement(CreateAgreementRequest) returns (AgreementReply);
+  rpc CreateAgreementVersion(CreateVersionRequest) returns (AgreementVersionReply);
   rpc GetAgreement(GetAgreementRequest) returns (AgreementReply);
-  rpc GetAgreementVersion(GetAgreementVersionsRequest) returns (AgreementVersionReply);
-  rpc GetAgreementVersions(GetAgreementRequest) returns (stream AgreementVersionReply);
+  rpc GetAgreementVersion(GetVersionRequest) returns (AgreementVersionReply);
+  rpc GetAgreementVersions(GetVersionsRequest) returns (stream AgreementVersionReply);
   //  rpc ListAgreements(ListAgreementsRequest) returns (stream AgreementReply);
   //  rpc UpdateAgreement(UpdateAgreementRequest) returns (AgreementReply);
   //  rpc DeleteAgreement(DeleteAgreementRequest) returns (DeleteAgreementResponse);
@@ -24,11 +25,21 @@ message CreateAgreementRequest {
   repeated int32 providers = 10;
 }
 
+message CreateVersionRequest {
+  int32 agreement_id = 1;
+  string content = 2;
+  int64 author_id = 3;
+}
+
 message GetAgreementRequest {
   int32 id = 1;
 }
 
-message GetAgreementVersionsRequest {
+message GetVersionRequest {
+  int32 id = 1;
+}
+
+message GetVersionsRequest {
   int32 id = 1;
 }
 
@@ -37,7 +48,6 @@ message AgreementReply {
 }
 
 message AgreementVersionReply {
-  Agreement agreement = 1;
   AgreementVersion agreement_version = 2;
 }
 

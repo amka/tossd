@@ -4,7 +4,9 @@ use tokio::sync::mpsc;
 use tonic::{Request, Response, Status};
 use tonic::codegen::tokio_stream::wrappers::ReceiverStream;
 
-use crate::agreements::{Agreement, AgreementReply, AgreementVersion, AgreementVersionReply, CreateAgreementRequest, GetAgreementRequest, GetAgreementVersionsRequest};
+use crate::agreements::{Agreement, AgreementReply, AgreementVersion, AgreementVersionReply,
+                        CreateAgreementRequest, CreateVersionRequest,
+                        GetAgreementRequest, GetVersionRequest, GetVersionsRequest};
 use crate::agreements::agreement_service_server::AgreementService;
 use crate::repository::agreements::AgreementsRepository;
 
@@ -37,10 +39,12 @@ impl AgreementService for Agreementer {
         // Затем создаём Версию.
         // Если при создании Версии получим ошибку - пользователь должен создать новую версию
         // минуя создание нового Соглашения.
-        let _ = AgreementsRepository::add_version(
-            conn,
-            inserted_agreement.clone().id.unwrap(),
-            create_agreement)
+        let create_version = CreateVersionRequest {
+            agreement_id: inserted_agreement.id.clone().unwrap(),
+            content: create_agreement.content,
+            author_id: inserted_agreement.author_id.clone().unwrap(),
+        };
+        let _ = AgreementsRepository::add_version(conn, create_version)
             .await
             .ok();
 
@@ -53,6 +57,32 @@ impl AgreementService for Agreementer {
                 updated_at: inserted_agreement.updated_at.unwrap().timestamp(),
                 author_id: inserted_agreement.author_id.unwrap(),
                 deleted: inserted_agreement.deleted.unwrap(),
+            })
+        }))
+    }
+
+
+    async fn create_agreement_version(&self, request: Request<CreateVersionRequest>)
+                                      -> Result<Response<AgreementVersionReply>, Status> {
+        debug!("CALLED: create_agreement");
+        let conn = &self.connection;
+        let create_version = request.into_inner();
+
+        let inserted = AgreementsRepository::add_version(conn, create_version)
+            .await
+            .ok()
+            .unwrap();
+
+        Ok(Response::new(AgreementVersionReply {
+            agreement_version: Some(AgreementVersion {
+                id: inserted.id.unwrap(),
+                agreement_id: inserted.agreement_id.unwrap(),
+                version: inserted.version.unwrap(),
+                content: inserted.content.unwrap(),
+                created_at: inserted.created_at.unwrap().timestamp(),
+                updated_at: inserted.updated_at.unwrap().timestamp(),
+                author_id: inserted.author_id.unwrap(),
+                deleted: inserted.deleted.unwrap(),
             })
         }))
     }
@@ -87,7 +117,8 @@ impl AgreementService for Agreementer {
         }
     }
 
-    async fn get_agreement_version(&self, request: Request<GetAgreementVersionsRequest>) -> Result<Response<AgreementVersionReply>, Status> {
+    async fn get_agreement_version(&self, request: Request<GetVersionRequest>)
+                                   -> Result<Response<AgreementVersionReply>, Status> {
         debug!("CALLED: get_agreement");
 
         let conn = &self.connection;
@@ -100,7 +131,6 @@ impl AgreementService for Agreementer {
         let unwrapped = version.unwrap();
 
         Ok(Response::new(AgreementVersionReply {
-            agreement: None,
             agreement_version: Some(AgreementVersion {
                 id: unwrapped.id as i64,
                 agreement_id: unwrapped.agreement_id,
@@ -116,7 +146,8 @@ impl AgreementService for Agreementer {
 
     type GetAgreementVersionsStream = ReceiverStream<Result<AgreementVersionReply, Status>>;
 
-    async fn get_agreement_versions(&self, request: Request<GetAgreementRequest>) -> Result<Response<Self::GetAgreementVersionsStream>, Status> {
+    async fn get_agreement_versions(&self, request: Request<GetVersionsRequest>)
+                                    -> Result<Response<Self::GetAgreementVersionsStream>, Status> {
         debug!("CALLED: get_agreement");
 
         let conn = &self.connection;
@@ -131,7 +162,6 @@ impl AgreementService for Agreementer {
         tokio::spawn(async move {
             for unwrapped in &versions[..] {
                 tx.send(Ok(AgreementVersionReply {
-                    agreement: None,
                     agreement_version: Some(AgreementVersion {
                         id: unwrapped.id as i64,
                         agreement_id: unwrapped.agreement_id,
