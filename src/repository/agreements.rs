@@ -3,10 +3,10 @@ use sea_orm::*;
 
 use crate::agreements::CreateAgreementRequest;
 use crate::models::{agreement, agreement_versions};
+use crate::models::agreement_versions::Model;
 
 pub struct AgreementsRepository;
 
-impl AgreementsRepository {}
 
 impl AgreementsRepository {
     pub async fn add(db: &DbConn, create_agreement: CreateAgreementRequest)
@@ -68,6 +68,14 @@ impl AgreementsRepository {
             .filter(agreement_versions::Column::AgreementId.eq(agreement_id))
             .order_by_desc(agreement_versions::Column::Version)
             .one(db)
+            .await
+    }
+
+    pub async fn find_versions_by_agreement_id(db: &DbConn, agreement_id: i32) -> Result<Vec<Model>, DbErr> {
+        agreement_versions::Entity::find()
+            .filter(agreement_versions::Column::AgreementId.eq(agreement_id))
+            .order_by_desc(agreement_versions::Column::Version)
+            .all(db)
             .await
     }
 }

@@ -1,5 +1,6 @@
 use log::debug;
 use sea_orm::DatabaseConnection;
+use tokio::sync::mpsc;
 use tonic::{Request, Response, Status};
 use tonic::codegen::tokio_stream::wrappers::ReceiverStream;
 
@@ -115,6 +116,37 @@ impl AgreementService for Agreementer {
     type GetAgreementVersionsStream = ReceiverStream<Result<AgreementVersionReply, Status>>;
 
     async fn get_agreement_versions(&self, request: Request<GetAgreementRequest>) -> Result<Response<Self::GetAgreementVersionsStream>, Status> {
-        todo!()
+        debug!("CALLED: get_agreement");
+
+        let conn = &self.connection;
+        let id = request.into_inner().id;
+
+        let versions = AgreementsRepository::find_versions_by_agreement_id(conn, id)
+            .await
+            .ok().unwrap();
+
+        let (tx, rx) = mpsc::channel(4);
+
+        tokio::spawn(async move {
+            for unwrapped in &versions[..] {
+                tx.send(Ok(AgreementVersionReply {
+                    agreement: None,
+                    agreement_version: Some(AgreementVersion {
+                        id: unwrapped.id as i64,
+                        agreement_id: unwrapped.agreement_id,
+                        version: unwrapped.version,
+                        title: unwrapped.title.clone(),
+                        content: unwrapped.content.clone(),
+                        created_at: unwrapped.created_at.timestamp(),
+                        updated_at: unwrapped.updated_at.timestamp(),
+                        deleted: unwrapped.deleted,
+                    }),
+                })).await.unwrap();
+            }
+
+            debug!(" /// done sending");
+        });
+
+        Ok(Response::new(ReceiverStream::new(rx)))
     }
 }
