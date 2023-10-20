@@ -11,11 +11,11 @@ pub struct Model {
     pub id: i32,
     pub agreement_id: i32,
     pub version: i32,
-    pub title: String,
     #[sea_orm(column_type = "Text")]
     pub content: String,
     pub created_at: DateTime,
     pub updated_at: DateTime,
+    pub author_id: i64,
     pub deleted: bool,
 }
 

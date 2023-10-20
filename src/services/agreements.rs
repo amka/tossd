@@ -14,16 +14,15 @@ pub struct Agreementer {
 
 #[tonic::async_trait]
 impl AgreementService for Agreementer {
+    /// Создаёт новое Соглашение и Версию соглашения.
+    ///
+    /// Если указан список `providers` - Соглашение привязывается к провайдерам
+    /// (на случай “вирутальных” провайдеров, таких как МотивТВ и др.).
+    ///
+    /// Если флаг `overrider_version` выставлен в `true` - обновляется последняя Версия
+    /// без создания новой.
     async fn create_agreement(&self, request: Request<CreateAgreementRequest>) -> Result<Response<AgreementReply>, Status> {
-        /// Создаёт новое Соглашение и Версию соглашения.
-        ///
-        /// Если указан список `providers` - Соглашение привязывается к провайдерам
-        /// (на случай “вирутальных” провайдеров, таких как МотивТВ и др.).
-        ///
-        /// Если флаг `overrider_version` выставлен в `true` - обновляется последняя Версия
-        /// без создания новой.
         debug!("CALLED: create_agreement");
-
         let conn = &self.connection;
         let create_agreement = request.into_inner();
 
@@ -49,6 +48,7 @@ impl AgreementService for Agreementer {
             agreement: Some(Agreement {
                 id: inserted_agreement.id.unwrap(),
                 inner_title: inserted_agreement.inner_title.unwrap(),
+                public_title: inserted_agreement.public_title.unwrap(),
                 created_at: inserted_agreement.created_at.unwrap().timestamp(),
                 updated_at: inserted_agreement.updated_at.unwrap().timestamp(),
                 author_id: inserted_agreement.author_id.unwrap(),
@@ -70,6 +70,7 @@ impl AgreementService for Agreementer {
                 agreement: Some(Agreement {
                     id,
                     inner_title: model.inner_title,
+                    public_title: model.public_title,
                     created_at: model.created_at.timestamp(),
                     updated_at: model.updated_at.timestamp(),
                     author_id: model.author_id,
@@ -104,10 +105,10 @@ impl AgreementService for Agreementer {
                 id: unwrapped.id as i64,
                 agreement_id: unwrapped.agreement_id,
                 version: unwrapped.version,
-                title: unwrapped.title,
                 content: unwrapped.content,
                 created_at: unwrapped.created_at.timestamp(),
                 updated_at: unwrapped.updated_at.timestamp(),
+                author_id: unwrapped.author_id,
                 deleted: unwrapped.deleted,
             }),
         }))
@@ -135,10 +136,10 @@ impl AgreementService for Agreementer {
                         id: unwrapped.id as i64,
                         agreement_id: unwrapped.agreement_id,
                         version: unwrapped.version,
-                        title: unwrapped.title.clone(),
                         content: unwrapped.content.clone(),
                         created_at: unwrapped.created_at.timestamp(),
                         updated_at: unwrapped.updated_at.timestamp(),
+                        author_id: unwrapped.author_id,
                         deleted: unwrapped.deleted,
                     }),
                 })).await.unwrap();

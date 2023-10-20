@@ -10,6 +10,7 @@ pub struct Model {
     #[serde(skip_deserializing)]
     pub id: i32,
     pub inner_title: String,
+    pub public_title: String,
     pub created_at: DateTime,
     pub updated_at: DateTime,
     pub author_id: i64,

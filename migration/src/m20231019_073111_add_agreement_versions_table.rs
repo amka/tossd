@@ -26,10 +26,10 @@ impl MigrationTrait for Migration {
                             .to(Agreement::Table, Agreement::Id),
                     )
                     .col(ColumnDef::new(AgreementVersions::Version).integer().not_null())
-                    .col(ColumnDef::new(AgreementVersions::Title).string().not_null())
                     .col(ColumnDef::new(AgreementVersions::Content).text().not_null())
                     .col(ColumnDef::new(AgreementVersions::CreatedAt).timestamp().not_null())
                     .col(ColumnDef::new(AgreementVersions::UpdatedAt).timestamp().not_null())
+                    .col(ColumnDef::new(AgreementVersions::AuthorId).big_integer().not_null())
                     .col(ColumnDef::new(AgreementVersions::Deleted).boolean().not_null())
                     .to_owned(),
             )
@@ -51,10 +51,10 @@ enum AgreementVersions {
     Id,
     AgreementId,
     Version,
-    Title,
     Content,
     CreatedAt,
     UpdatedAt,
+    AuthorId,
     Deleted,
 }
 

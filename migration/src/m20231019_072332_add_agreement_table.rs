@@ -19,6 +19,7 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(ColumnDef::new(Agreement::InnerTitle).string().not_null())
+                    .col(ColumnDef::new(Agreement::PublicTitle).string().not_null())
                     .col(ColumnDef::new(Agreement::CreatedAt).timestamp().not_null())
                     .col(ColumnDef::new(Agreement::UpdatedAt).timestamp().not_null())
                     .col(ColumnDef::new(Agreement::AuthorId).big_integer().not_null())
@@ -40,6 +41,7 @@ enum Agreement {
     Table,
     Id,
     InnerTitle,
+    PublicTitle,
     CreatedAt,
     UpdatedAt,
     AuthorId,

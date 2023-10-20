@@ -14,8 +14,9 @@ impl AgreementsRepository {
         debug!("AgreementsRepository::add <- {:?}", create_agreement);
         let now = chrono::Utc::now().naive_utc();
 
-        let mut agreement = agreement::ActiveModel {
+        let agreement = agreement::ActiveModel {
             inner_title: Set(create_agreement.inner_title),
+            public_title: Set(create_agreement.public_title),
             created_at: Set(now),
             updated_at: Set(now),
             author_id: Set(create_agreement.author_id),
@@ -38,13 +39,13 @@ impl AgreementsRepository {
 
         let now = chrono::Utc::now().naive_utc();
 
-        let mut version = agreement_versions::ActiveModel {
+        let version = agreement_versions::ActiveModel {
             agreement_id: Set(agreement_id),
             version: Set((versions + 1) as i32),
-            title: Set(create_agreement.inner_title),
             content: Set(create_agreement.content),
             created_at: Set(now),
             updated_at: Set(now),
+            author_id: Set(create_agreement.author_id),
             deleted: Set(false),
             ..Default::default()
         };
