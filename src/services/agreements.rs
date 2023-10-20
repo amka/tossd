@@ -3,7 +3,7 @@ use sea_orm::DatabaseConnection;
 use tonic::{Request, Response, Status};
 use tonic::codegen::tokio_stream::wrappers::ReceiverStream;
 
-use crate::agreements::{Agreement, AgreementReply, AgreementVersionReply, CreateAgreementRequest, GetAgreementRequest, GetAgreementVersionsRequest};
+use crate::agreements::{Agreement, AgreementReply, AgreementVersion, AgreementVersionReply, CreateAgreementRequest, GetAgreementRequest, GetAgreementVersionsRequest};
 use crate::agreements::agreement_service_server::AgreementService;
 use crate::repository::agreements::AgreementsRepository;
 
@@ -33,12 +33,6 @@ impl AgreementService for Agreementer {
             .await
             .ok()
             .unwrap();
-        // .map_err(|err| {
-        //     return Err(Status::new(
-        //         tonic::Code::Aborted,
-        //         "Could not create an Agreement",
-        //     ));
-        // });
 
         // Затем создаём Версию.
         // Если при создании Версии получим ошибку - пользователь должен создать новую версию
@@ -92,7 +86,30 @@ impl AgreementService for Agreementer {
     }
 
     async fn get_agreement_version(&self, request: Request<GetAgreementVersionsRequest>) -> Result<Response<AgreementVersionReply>, Status> {
-        todo!()
+        debug!("CALLED: get_agreement");
+
+        let conn = &self.connection;
+        let id = request.into_inner().id;
+
+        let version = AgreementsRepository::find_version_by_agreement_id(conn, id)
+            .await
+            .ok().unwrap();
+
+        let unwrapped = version.unwrap();
+
+        Ok(Response::new(AgreementVersionReply {
+            agreement: None,
+            agreement_version: Some(AgreementVersion {
+                id: unwrapped.id as i64,
+                agreement_id: unwrapped.agreement_id,
+                version: unwrapped.version,
+                title: unwrapped.title,
+                content: unwrapped.content,
+                created_at: unwrapped.created_at.timestamp(),
+                updated_at: unwrapped.updated_at.timestamp(),
+                deleted: unwrapped.deleted,
+            }),
+        }))
     }
 
     type GetAgreementVersionsStream = ReceiverStream<Result<AgreementVersionReply, Status>>;

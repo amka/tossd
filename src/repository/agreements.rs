@@ -6,6 +6,8 @@ use crate::models::{agreement, agreement_versions};
 
 pub struct AgreementsRepository;
 
+impl AgreementsRepository {}
+
 impl AgreementsRepository {
     pub async fn add(db: &DbConn, create_agreement: CreateAgreementRequest)
                      -> Result<agreement::ActiveModel, DbErr> {
@@ -50,7 +52,22 @@ impl AgreementsRepository {
         version.save(db).await
     }
 
-    pub async fn find_by_id(db: &DbConn, id: i32) -> Result<Option<agreement::Model>, DbErr> {
+    /// Возвращает Соглашение по его идентификатору.
+    pub async fn find_by_id(db: &DbConn, id: i32)
+                            -> Result<Option<agreement::Model>, DbErr> {
         agreement::Entity::find_by_id(id).one(db).await
+    }
+
+    /// Возвращает Версию Соглашения с самой высокой версией.
+    ///
+    /// Фукнция использует поле `version` для выборки, т. о. обновление бодлее старых версий
+    /// не изменит результат выполнения этой функции.
+    pub async fn find_version_by_agreement_id(db: &DbConn, agreement_id: i32)
+                                              -> Result<Option<agreement_versions::Model>, DbErr> {
+        agreement_versions::Entity::find()
+            .filter(agreement_versions::Column::AgreementId.eq(agreement_id))
+            .order_by_desc(agreement_versions::Column::Version)
+            .one(db)
+            .await
     }
 }
