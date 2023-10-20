@@ -12,7 +12,6 @@ pub struct Model {
     pub inner_title: String,
     pub created_at: DateTime,
     pub updated_at: DateTime,
-    pub provider_id: i64,
     pub author_id: i64,
     pub deleted: bool,
 }

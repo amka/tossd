@@ -1,24 +1,53 @@
 use log::debug;
 use sea_orm::*;
 
-use crate::agreements::Agreement;
+use crate::agreements::CreateAgreementRequest;
 use crate::models::{agreement, agreement_versions};
 
 pub struct AgreementsRepository;
 
 impl AgreementsRepository {
-    pub async fn add(db: &DbConn, agreement: Agreement) -> Result<agreement::ActiveModel, DbErr> {
-        debug!("AgreementsRepository::add <- {:?}", agreement);
-        agreement::ActiveModel {
-            id: Default::default(),
-            inner_title: Default::default(),
-            created_at: Default::default(),
-            updated_at: Default::default(),
-            author_id: Default::default(),
+    pub async fn add(db: &DbConn, create_agreement: CreateAgreementRequest)
+                     -> Result<agreement::ActiveModel, DbErr> {
+        debug!("AgreementsRepository::add <- {:?}", create_agreement);
+        let now = chrono::Utc::now().naive_utc();
+
+        let mut agreement = agreement::ActiveModel {
+            inner_title: Set(create_agreement.inner_title),
+            created_at: Set(now),
+            updated_at: Set(now),
+            author_id: Set(create_agreement.author_id),
+            deleted: Set(false),
             ..Default::default()
-        }
-            .save(db)
-            .await
+        };
+
+        agreement.save(db).await
+    }
+
+    pub async fn add_version(db: &DbConn, agreement_id: i32, create_agreement: CreateAgreementRequest)
+                             -> Result<agreement_versions::ActiveModel, DbErr>
+    {
+        debug!("AgreementsRepository::add_version <- {:?}", agreement_id);
+        // Находим все Версии Соглашения, чтобы узнать новый номер Версии.
+        let versions = agreement_versions::Entity::find()
+            .filter(agreement_versions::Column::AgreementId.eq(agreement_id))
+            .count(db)
+            .await?;
+
+        let now = chrono::Utc::now().naive_utc();
+
+        let mut version = agreement_versions::ActiveModel {
+            agreement_id: Set(agreement_id),
+            version: Set((versions + 1) as i32),
+            title: Set(create_agreement.inner_title),
+            content: Set(create_agreement.content),
+            created_at: Set(now),
+            updated_at: Set(now),
+            deleted: Set(false),
+            ..Default::default()
+        };
+
+        version.save(db).await
     }
 
     pub async fn find_by_id(db: &DbConn, id: i32) -> Result<Option<agreement::Model>, DbErr> {

@@ -9,19 +9,21 @@ service AgreementService {
   rpc GetAgreement(GetAgreementRequest) returns (AgreementReply);
   rpc GetAgreementVersion(GetAgreementVersionsRequest) returns (AgreementVersionReply);
   rpc GetAgreementVersions(GetAgreementRequest) returns (stream AgreementVersionReply);
-//  rpc ListAgreements(ListAgreementsRequest) returns (stream AgreementReply);
-//  rpc UpdateAgreement(UpdateAgreementRequest) returns (AgreementReply);
-//  rpc DeleteAgreement(DeleteAgreementRequest) returns (DeleteAgreementResponse);
-//  rpc AcceptAgreement(AcceptAgreementRequest) returns (AcceptAgreementResponse);
-//  rpc GetUnacceptedAgreements(GetUnacceptedAgreementsRequest) returns (GetUnacceptedAgreementsResponse);
+  //  rpc ListAgreements(ListAgreementsRequest) returns (stream AgreementReply);
+  //  rpc UpdateAgreement(UpdateAgreementRequest) returns (AgreementReply);
+  //  rpc DeleteAgreement(DeleteAgreementRequest) returns (DeleteAgreementResponse);
+  //  rpc AcceptAgreement(AcceptAgreementRequest) returns (AcceptAgreementResponse);
+  //  rpc GetUnacceptedAgreements(GetUnacceptedAgreementsRequest) returns (GetUnacceptedAgreementsResponse);
 }
 
 message CreateAgreementRequest {
   int32 id = 1;
   string inner_title = 2;
-  int64 author_id = 3;
-  bool deleted = 4;
+  string public_title = 3;
+  string content = 4;
+  int64 author_id = 9;
   repeated int32 providers = 10;
+  bool overrider_version = 11;
 }
 
 message GetAgreementRequest {
@@ -70,8 +72,18 @@ message Agreement {
   int64 created_at = 3;
   int64 updated_at = 4;
   int64 author_id = 5;
-  int64 provider_id = 6;
   bool deleted = 7;
+}
+
+message AgreementVersion {
+  int64 id = 1;
+  int32 agreement_id = 2;
+  int32 version = 3;
+  string title = 4;
+  string content = 5;
+  int64 created_at = 6;
+  int64 updated_at = 7;
+  bool deleted = 8;
 }
 
 message AgreementAcceptanceStatus {
@@ -81,16 +93,5 @@ message AgreementAcceptanceStatus {
   int32 agreement_id = 4;
   int64 version = 5;
   bool accepted = 6;
-  google.protobuf.Timestamp accepted_at = 7;
-}
-
-message AgreementVersion {
-  int64 id = 1;
-  int32 agreement_id = 2;
-  int32 version = 3;
-  string title = 4;
-  string content = 5;
-  google.protobuf.Timestamp created_at = 6;
-  google.protobuf.Timestamp updated_at = 7;
-  bool deleted = 8;
+  int64 accepted_at = 7;
 }
