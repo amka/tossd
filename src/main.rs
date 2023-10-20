@@ -2,16 +2,18 @@ use log::info;
 use sea_orm::Database;
 use tonic::transport::Server;
 
-use agreements::agreements_service_server::AgreementsServiceServer;
+// use agreements::agreements_service_server::AgreementsServiceServer;
 use migration::{Migrator, MigratorTrait};
 use services::agreements::Agreementer;
+
+use crate::agreements::agreement_service_server::AgreementServiceServer;
 
 mod services;
 mod models;
 mod repository;
 
 pub mod agreements {
-    tonic::include_proto!("agreements"); // The string specified here must match the proto package name
+    tonic::include_proto!("agreement_service"); // The string specified here must match the proto package name
 }
 
 #[tokio::main]
@@ -30,7 +32,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Starting gRPC Server at {}", addr);
 
     Server::builder()
-        .add_service(AgreementsServiceServer::new(agreementer))
+        .add_service(AgreementServiceServer::new(agreementer))
         .serve(addr)
         .await?;
 

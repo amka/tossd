@@ -3001,6 +3001,7 @@ dependencies = [
  "log",
  "migration",
  "prost",
+ "prost-types",
  "sea-orm",
  "sea-orm-migration",
  "serde",

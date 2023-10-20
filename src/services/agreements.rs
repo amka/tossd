@@ -1,76 +1,31 @@
-use log::debug;
-use sea_orm::{DatabaseConnection, TryIntoModel};
+use sea_orm::DatabaseConnection;
 use tonic::{Request, Response, Status};
 use tonic::codegen::tokio_stream::wrappers::ReceiverStream;
 
-use crate::agreements::{Agreement, AgreementAcceptance, AgreementAcceptanceResponse, GetAgreementRequest};
-use crate::agreements::agreements_service_server::AgreementsService;
-use crate::repository::agreements::AgreementsRepository;
+use crate::agreements::{AgreementReply, AgreementVersionReply, CreateAgreementRequest, GetAgreementRequest, GetAgreementVersionsRequest};
+use crate::agreements::agreement_service_server::AgreementService;
 
 pub struct Agreementer {
     pub connection: DatabaseConnection,
 }
 
 #[tonic::async_trait]
-impl AgreementsService for Agreementer {
-    async fn create_agreement(&self, request: Request<Agreement>) -> Result<Response<Agreement>, Status> {
-        debug!("Called create_agreement");
-        todo!();
-        // let conn = &self.connection;
-        //
-        // if let Some(inserted) = AgreementsRepository::add(conn, request.into_inner())
-        //     .await
-        //     .ok() {
-        //     let agreement = Agreement::from_model(inserted.try_into_model().unwrap());
-        //
-        //     Ok(Response::new(agreement))
-        // } else {
-        //     Err(Status::new(
-        //         tonic::Code::Aborted,
-        //         "Could not insert Agreement",
-        //     ))
-        // }
-    }
-
-    async fn update_agreement(&self, request: Request<Agreement>) -> Result<Response<Agreement>, Status> {
-        debug!("Called update_agreement");
+impl AgreementService for Agreementer {
+    async fn create_agreement(&self, request: Request<CreateAgreementRequest>) -> Result<Response<AgreementReply>, Status> {
         todo!()
     }
 
-    async fn delete_agreement(&self, request: Request<Agreement>) -> Result<Response<Agreement>, Status> {
-        debug!("Called delete_agreement");
+    async fn get_agreement(&self, request: Request<GetAgreementRequest>) -> Result<Response<AgreementReply>, Status> {
         todo!()
     }
 
-    async fn get_agreement(&self, request: Request<GetAgreementRequest>) -> Result<Response<Agreement>, Status> {
-        debug!("Called get_agreement");
-        todo!();
-        // let conn = &self.connection;
-        // let id = request.into_inner().id;
-        //
-        // if let Some(model) = AgreementsRepository::find_by_id(conn, id)
-        //     .await
-        //     .ok().unwrap() {
-        //     let agreement = Agreement::from_model(model);
-        //
-        //     Ok(Response::new(agreement))
-        // } else {
-        //     Err(Status::new(
-        //         tonic::Code::Aborted,
-        //         "Could not find Agreement with id ".to_owned() + &id.to_string(),
-        //     ))
-        // }
-    }
-
-    type GetAgreementAcceptancesStream = ReceiverStream<Result<AgreementAcceptance, Status>>;
-
-    async fn get_agreement_acceptances(&self, request: Request<Agreement>) -> Result<Response<Self::GetAgreementAcceptancesStream>, Status> {
-        debug!("Called get_agreement_acceptances");
+    async fn get_agreement_version(&self, request: Request<GetAgreementVersionsRequest>) -> Result<Response<AgreementVersionReply>, Status> {
         todo!()
     }
 
-    async fn set_agreement_acceptance(&self, request: Request<AgreementAcceptance>) -> Result<Response<AgreementAcceptanceResponse>, Status> {
-        debug!("Called set_agreement_acceptance");
+    type GetAgreementVersionsStream = ReceiverStream<Result<AgreementVersionReply, Status>>;
+
+    async fn get_agreement_versions(&self, request: Request<GetAgreementRequest>) -> Result<Response<Self::GetAgreementVersionsStream>, Status> {
         todo!()
     }
 }

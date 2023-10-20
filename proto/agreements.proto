@@ -1,71 +1,95 @@
 syntax = "proto3";
 
-package agreements;
+package agreement_service;
 
-option go_package = "agreements";
+import "google/protobuf/timestamp.proto";
 
-// Статус: черновик или опубликован
-enum AgreementStatus {
-  DRAFT = 0;
-  PUBLISHED = 1;
+service AgreementService {
+  rpc CreateAgreement(CreateAgreementRequest) returns (AgreementReply);
+  rpc GetAgreement(GetAgreementRequest) returns (AgreementReply);
+  rpc GetAgreementVersion(GetAgreementVersionsRequest) returns (AgreementVersionReply);
+  rpc GetAgreementVersions(GetAgreementRequest) returns (stream AgreementVersionReply);
+//  rpc ListAgreements(ListAgreementsRequest) returns (stream AgreementReply);
+//  rpc UpdateAgreement(UpdateAgreementRequest) returns (AgreementReply);
+//  rpc DeleteAgreement(DeleteAgreementRequest) returns (DeleteAgreementResponse);
+//  rpc AcceptAgreement(AcceptAgreementRequest) returns (AcceptAgreementResponse);
+//  rpc GetUnacceptedAgreements(GetUnacceptedAgreementsRequest) returns (GetUnacceptedAgreementsResponse);
 }
 
-// Соглашение
-message Agreement {
+message CreateAgreementRequest {
   int32 id = 1;
-  //  внутреннее название
-  string internal_name = 2;
-  // публичный заголовок
-  string public_title = 3;
-  // публичный текст в формате html, markdown или plain
-  string public_text = 4;
-  // статус: черновик или опубликован
-  AgreementStatus status = 5;
-  // дату публикации
-  string published_at = 6;
-  // дату создания
-  string created_at = 7;
-  // дату изменения
-  string updated_at = 8;
-  // автора последнего изменения
-  string author_id = 9;
-  // флаг удаления
-  bool deleted = 10;
-}
-
-// состояние принятия соглашения пользователем
-message AgreementAcceptance {
-  int32 id = 1;
-  // идентификатор соглашения
-  string agreement_id = 2;
-  // идентификатор пользователя
-  string user_id = 3;
-  // флаг принятия
-  bool accepted = 4;
-  // дату принятия
-  string accepted_at = 5;
-}
-
-message AgreementAcceptanceResponse {
-  bool accepted = 1;
+  string inner_title = 2;
+  int64 author_id = 3;
+  bool deleted = 4;
+  repeated int32 providers = 10;
 }
 
 message GetAgreementRequest {
   int32 id = 1;
 }
 
-// Сервис управления соглашениями
-service AgreementsService {
-  // создает новое соглашение
-  rpc CreateAgreement(Agreement) returns (Agreement);
-  // обновляет существующее соглашение
-  rpc UpdateAgreement(Agreement) returns (Agreement);
-  // удаляет существующее соглашение
-  rpc DeleteAgreement(Agreement) returns (Agreement);
-  // возвращает соглашение по идентификатору
-  rpc GetAgreement(GetAgreementRequest) returns (Agreement);
-  // возвращает все состояния принятия соглашения для пользователя
-  rpc GetAgreementAcceptances(Agreement) returns (stream AgreementAcceptance);
-  // устанавливает состояние принятия соглашения для пользователя
-  rpc SetAgreementAcceptance(AgreementAcceptance) returns (AgreementAcceptanceResponse);
+message GetAgreementVersionsRequest {
+  int32 id = 1;
+}
+
+message AgreementReply {
+  Agreement agreement = 1;
+}
+
+message AgreementVersionReply {
+  Agreement agreement = 1;
+  AgreementVersion agreement_version = 2;
+}
+
+message AcceptAgreementRequest {
+  int32 agreement_id = 1;
+  int32 version = 2;
+  int64 user_id = 3;
+  int32 provider_id = 4;
+}
+
+message DeleteAgreementRequest {
+  int64 id = 1;
+}
+
+message DeleteAgreementResponse {
+  bool success = 1;
+}
+
+message GetUnacceptedAgreementsRequest {
+  int64 user_id = 1;
+}
+
+message GetUnacceptedAgreementsResponse {
+  repeated Agreement agreements = 1;
+}
+
+message Agreement {
+  int32 id = 1;
+  string inner_title = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  int64 provider_id = 5;
+  bool deleted = 6;
+}
+
+message AgreementAcceptanceStatus {
+  int64 id = 1;
+  int64 user_id = 2;
+  int64 provider_id = 3;
+  int32 agreement_id = 4;
+  int64 version = 5;
+  bool accepted = 6;
+  google.protobuf.Timestamp accepted_at = 7;
+}
+
+message AgreementVersion {
+  int64 id = 1;
+  int32 agreement_id = 2;
+  int32 version = 3;
+  string title = 4;
+  string content = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+  bool deleted = 8;
 }
