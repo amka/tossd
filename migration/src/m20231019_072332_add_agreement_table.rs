@@ -21,7 +21,6 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Agreement::InnerTitle).string().not_null())
                     .col(ColumnDef::new(Agreement::CreatedAt).timestamp().not_null())
                     .col(ColumnDef::new(Agreement::UpdatedAt).timestamp().not_null())
-                    .col(ColumnDef::new(Agreement::ProviderId).big_integer().not_null())
                     .col(ColumnDef::new(Agreement::AuthorId).big_integer().not_null())
                     .col(ColumnDef::new(Agreement::Deleted).boolean().not_null())
                     .to_owned(),
@@ -43,7 +42,6 @@ enum Agreement {
     InnerTitle,
     CreatedAt,
     UpdatedAt,
-    ProviderId,
     AuthorId,
     Deleted,
 }
