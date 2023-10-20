@@ -67,10 +67,11 @@ message GetUnacceptedAgreementsResponse {
 message Agreement {
   int32 id = 1;
   string inner_title = 2;
-  google.protobuf.Timestamp created_at = 3;
-  google.protobuf.Timestamp updated_at = 4;
-  int64 provider_id = 5;
-  bool deleted = 6;
+  int64 created_at = 3;
+  int64 updated_at = 4;
+  int64 author_id = 5;
+  int64 provider_id = 6;
+  bool deleted = 7;
 }
 
 message AgreementAcceptanceStatus {

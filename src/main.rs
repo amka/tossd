@@ -2,7 +2,6 @@ use log::info;
 use sea_orm::Database;
 use tonic::transport::Server;
 
-// use agreements::agreements_service_server::AgreementsServiceServer;
 use migration::{Migrator, MigratorTrait};
 use services::agreements::Agreementer;
 

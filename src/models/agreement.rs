@@ -2,7 +2,6 @@
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::models::prelude::Agreement;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
 #[sea_orm(table_name = "agreement")]
@@ -13,6 +12,7 @@ pub struct Model {
     pub inner_title: String,
     pub created_at: DateTime,
     pub updated_at: DateTime,
+    pub provider_id: i64,
     pub author_id: i64,
     pub deleted: bool,
 }
@@ -38,4 +38,3 @@ impl Related<super::agreement_versions::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
-
