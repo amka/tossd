@@ -4,9 +4,7 @@ use tokio::sync::mpsc;
 use tonic::{Request, Response, Status};
 use tonic::codegen::tokio_stream::wrappers::ReceiverStream;
 
-use crate::agreements::{Agreement, AgreementReply, AgreementVersion, AgreementVersionReply,
-                        CreateAgreementRequest, CreateVersionRequest,
-                        GetAgreementRequest, GetVersionRequest, GetVersionsRequest};
+use crate::agreements::{AcceptAgreementReply, AcceptAgreementRequest, Agreement, AgreementReply, AgreementVersion, AgreementVersionReply, CreateAgreementRequest, CreateVersionRequest, GetAgreementRequest, GetVersionRequest, GetVersionsRequest};
 use crate::agreements::agreement_service_server::AgreementService;
 use crate::repository::agreements::AgreementsRepository;
 
@@ -179,5 +177,32 @@ impl AgreementService for Agreementer {
         });
 
         Ok(Response::new(ReceiverStream::new(rx)))
+    }
+
+
+    async fn accept_agreement(&self, request: Request<AcceptAgreementRequest>) -> Result<Response<AcceptAgreementReply>, Status> {
+        let accept_request = request.into_inner();
+
+        let conn = &self.connection;
+
+        match AgreementsRepository::accept_agreement(conn, accept_request.clone())
+            .await {
+            Ok(_) => {
+                Ok(Response::new(AcceptAgreementReply {
+                    agreement_id: accept_request.agreement_id,
+                    version: accept_request.version,
+                    user_id: accept_request.user_id,
+                    provider_id: accept_request.provider_id,
+                }))
+            }
+            Err(e) => {
+                debug!("Accept agreement failed: {:?}", e);
+                Err(Status::new(
+                    tonic::Code::Aborted,
+                    "Could not accept Agreement with id ".to_owned() +
+                        &accept_request.agreement_id.to_string(),
+                ))
+            }
+        }
     }
 }

@@ -13,7 +13,7 @@ service AgreementService {
   //  rpc ListAgreements(ListAgreementsRequest) returns (stream AgreementReply);
   //  rpc UpdateAgreement(UpdateAgreementRequest) returns (AgreementReply);
   //  rpc DeleteAgreement(DeleteAgreementRequest) returns (DeleteAgreementResponse);
-  //  rpc AcceptAgreement(AcceptAgreementRequest) returns (AcceptAgreementResponse);
+    rpc AcceptAgreement(AcceptAgreementRequest) returns (AcceptAgreementReply);
   //  rpc GetUnacceptedAgreements(GetUnacceptedAgreementsRequest) returns (GetUnacceptedAgreementsResponse);
 }
 
@@ -52,6 +52,13 @@ message AgreementVersionReply {
 }
 
 message AcceptAgreementRequest {
+  int32 agreement_id = 1;
+  int32 version = 2;
+  int64 user_id = 3;
+  int32 provider_id = 4;
+}
+
+message AcceptAgreementReply {
   int32 agreement_id = 1;
   int32 version = 2;
   int64 user_id = 3;
