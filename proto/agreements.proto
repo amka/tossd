@@ -14,7 +14,7 @@ service AgreementService {
   //  rpc UpdateAgreement(UpdateAgreementRequest) returns (AgreementReply);
   //  rpc DeleteAgreement(DeleteAgreementRequest) returns (DeleteAgreementResponse);
     rpc AcceptAgreement(AcceptAgreementRequest) returns (AcceptAgreementReply);
-  //  rpc GetUnacceptedAgreements(GetUnacceptedAgreementsRequest) returns (GetUnacceptedAgreementsResponse);
+    rpc GetUnacceptedAgreements(GetUnacceptedAgreementsRequest) returns (GetUnacceptedAgreementsReply);
 }
 
 message CreateAgreementRequest {
@@ -75,10 +75,11 @@ message DeleteAgreementResponse {
 
 message GetUnacceptedAgreementsRequest {
   int64 user_id = 1;
+  optional int32 provider_id = 2;
 }
 
-message GetUnacceptedAgreementsResponse {
-  repeated Agreement agreements = 1;
+message GetUnacceptedAgreementsReply {
+  repeated int32 agreements = 1;
 }
 
 message Agreement {

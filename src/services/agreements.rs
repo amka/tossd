@@ -4,7 +4,7 @@ use tokio::sync::mpsc;
 use tonic::{Request, Response, Status};
 use tonic::codegen::tokio_stream::wrappers::ReceiverStream;
 
-use crate::agreements::{AcceptAgreementReply, AcceptAgreementRequest, Agreement, AgreementReply, AgreementVersion, AgreementVersionReply, CreateAgreementRequest, CreateVersionRequest, GetAgreementRequest, GetVersionRequest, GetVersionsRequest};
+use crate::agreements::{AcceptAgreementReply, AcceptAgreementRequest, Agreement, AgreementReply, AgreementVersion, AgreementVersionReply, CreateAgreementRequest, CreateVersionRequest, GetAgreementRequest, GetUnacceptedAgreementsReply, GetUnacceptedAgreementsRequest, GetVersionRequest, GetVersionsRequest};
 use crate::agreements::agreement_service_server::AgreementService;
 use crate::repository::agreements::AgreementsRepository;
 
@@ -204,5 +204,19 @@ impl AgreementService for Agreementer {
                 ))
             }
         }
+    }
+
+    async fn get_unaccepted_agreements(&self, request: Request<GetUnacceptedAgreementsRequest>) -> Result<Response<GetUnacceptedAgreementsReply>, Status> {
+        let unaccepted_request = request.into_inner();
+        let conn = &self.connection;
+
+        let agreements = AgreementsRepository::find_unaccepted(conn, unaccepted_request)
+            .await
+            .ok()
+            .unwrap();
+
+        Ok(Response::new(GetUnacceptedAgreementsReply {
+            agreements
+        }))
     }
 }

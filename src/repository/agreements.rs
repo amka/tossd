@@ -1,7 +1,8 @@
 use log::debug;
 use sea_orm::*;
+use sea_orm::sea_query::Query;
 
-use crate::agreements::{AcceptAgreementRequest, CreateAgreementRequest, CreateVersionRequest};
+use crate::agreements::{AcceptAgreementRequest, CreateAgreementRequest, CreateVersionRequest, GetUnacceptedAgreementsRequest};
 use crate::models::{agreement, agreement_acceptance_status, agreement_versions};
 use crate::models::agreement_versions::Model;
 
@@ -114,6 +115,27 @@ impl AgreementsRepository {
             ..Default::default()
         }
             .save(db)
+            .await
+    }
+
+    pub async fn find_unaccepted(db: &DbConn, request: GetUnacceptedAgreementsRequest) -> Result<Vec<i32>, DbErr> {
+        debug!("AgreementsRepository::find_unaccepted <- {:?}", request);
+
+        agreement::Entity::find()
+            .select_only()
+            .column(agreement::Column::Id)
+            .filter(agreement::Column::Id.not_in_subquery(
+                Query::select()
+                    .column(agreement_acceptance_status::Column::AgreementId)
+                    .from(agreement_acceptance_status::Entity)
+                    .and_where(agreement_acceptance_status::Column::UserId.eq(request.user_id))
+                    .and_where(agreement_acceptance_status::Column::ProviderId.is_null().or(
+                        agreement_acceptance_status::Column::ProviderId.eq(request.provider_id))
+                    )
+                    .to_owned()
+            ))
+            .into_tuple::<i32>()
+            .all(db)
             .await
     }
 }
