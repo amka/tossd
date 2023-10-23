@@ -31,10 +31,14 @@ impl AgreementsRepository {
                              -> Result<agreement_versions::ActiveModel, DbErr>
     {
         debug!("AgreementsRepository::add_version <- {:?}", create_version.agreement_id);
+
+        // Открываем транзакцию
+        let tx = db.begin().await?;
+
         // Находим все Версии Соглашения, чтобы узнать новый номер Версии.
         let versions = agreement_versions::Entity::find()
             .filter(agreement_versions::Column::AgreementId.eq(create_version.agreement_id))
-            .count(db)
+            .count(&tx)
             .await?;
 
         let now = chrono::Utc::now().naive_utc();
@@ -48,9 +52,20 @@ impl AgreementsRepository {
             author_id: Set(create_version.author_id),
             deleted: Set(false),
             ..Default::default()
-        };
+        }
+            .save(&tx)
+            .await;
 
-        version.save(db).await
+        // Удаляем все старые принятые версии
+        agreement_acceptance_status::Entity::delete_many()
+            .filter(agreement_acceptance_status::Column::AgreementId.eq(create_version.agreement_id))
+            .filter(agreement_acceptance_status::Column::Version.lt(versions + 1))
+            .exec(&tx)
+            .await?;
+
+        tx.commit().await?;
+
+        version
     }
 
     /// Возвращает Соглашение по его идентификатору.
@@ -141,7 +156,7 @@ impl AgreementsRepository {
         debug!("AgreementsRepository::accept_agreement <- {:?}", accept_request);
         agreement_acceptance_status::ActiveModel {
             user_id: Set(accept_request.user_id),
-            provider_id: Set(Option::from(accept_request.provider_id)),
+            provider_id: Set(accept_request.provider_id),
             agreement_id: Set(accept_request.agreement_id),
             version: Set(accept_request.version),
             accepted: Set(true),
