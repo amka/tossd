@@ -4,7 +4,7 @@ use tokio::sync::mpsc;
 use tonic::{Request, Response, Status};
 use tonic::codegen::tokio_stream::wrappers::ReceiverStream;
 
-use crate::agreements::{AcceptAgreementReply, AcceptAgreementRequest, Agreement, AgreementReply, AgreementVersion, AgreementVersionReply, CreateAgreementRequest, CreateVersionRequest, GetAgreementRequest, GetUnacceptedAgreementsReply, GetUnacceptedAgreementsRequest, GetVersionRequest, GetVersionsRequest};
+use crate::agreements::{AcceptAgreementReply, AcceptAgreementRequest, Agreement, AgreementReply, AgreementVersion, AgreementVersionReply, CreateAgreementRequest, CreateVersionRequest, GetAgreementRequest, GetUnacceptedAgreementsReply, GetUnacceptedAgreementsRequest, GetVersionRequest, GetVersionsRequest, ListAgreementsRequest};
 use crate::agreements::agreement_service_server::AgreementService;
 use crate::repository::agreements::AgreementsRepository;
 
@@ -58,8 +58,6 @@ impl AgreementService for Agreementer {
             })
         }))
     }
-
-
     async fn create_agreement_version(&self, request: Request<CreateVersionRequest>)
                                       -> Result<Response<AgreementVersionReply>, Status> {
         debug!("CALLED: create_agreement");
@@ -114,6 +112,7 @@ impl AgreementService for Agreementer {
             ))
         }
     }
+
 
     async fn get_agreement_version(&self, request: Request<GetVersionRequest>)
                                    -> Result<Response<AgreementVersionReply>, Status> {
@@ -170,6 +169,43 @@ impl AgreementService for Agreementer {
                         author_id: unwrapped.author_id,
                         deleted: unwrapped.deleted,
                     }),
+                })).await.unwrap();
+            }
+
+            debug!(" /// done sending");
+        });
+
+        Ok(Response::new(ReceiverStream::new(rx)))
+    }
+
+
+    type ListAgreementsStream = ReceiverStream<Result<AgreementReply, Status>>;
+
+
+    async fn list_agreements(&self, request: Request<ListAgreementsRequest>) -> Result<Response<Self::ListAgreementsStream>, Status> {
+        debug!("CALLED: get_agreement");
+
+        let conn = &self.connection;
+        let request = request.into_inner();
+
+        let versions = AgreementsRepository::find_versions_by_agreement_id(conn, id)
+            .await
+            .ok().unwrap();
+
+        let (tx, rx) = mpsc::channel(4);
+
+        tokio::spawn(async move {
+            for unwrapped in &versions[..] {
+                tx.send(Ok(AgreementReply {
+                    agreement: Agreement {
+                        id: 0,
+                        inner_title: unwrapped,
+                        public_title: "".to_string(),
+                        created_at: 0,
+                        updated_at: 0,
+                        author_id: 0,
+                        deleted: false,
+                    }
                 })).await.unwrap();
             }
 

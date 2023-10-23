@@ -2,15 +2,13 @@ syntax = "proto3";
 
 package agreement_service;
 
-import "google/protobuf/timestamp.proto";
-
 service AgreementService {
   rpc CreateAgreement(CreateAgreementRequest) returns (AgreementReply);
   rpc CreateAgreementVersion(CreateVersionRequest) returns (AgreementVersionReply);
   rpc GetAgreement(GetAgreementRequest) returns (AgreementReply);
   rpc GetAgreementVersion(GetVersionRequest) returns (AgreementVersionReply);
   rpc GetAgreementVersions(GetVersionsRequest) returns (stream AgreementVersionReply);
-  //  rpc ListAgreements(ListAgreementsRequest) returns (stream AgreementReply);
+  rpc ListAgreements(ListAgreementsRequest) returns (stream AgreementReply);
   //  rpc UpdateAgreement(UpdateAgreementRequest) returns (AgreementReply);
   //  rpc DeleteAgreement(DeleteAgreementRequest) returns (DeleteAgreementResponse);
     rpc AcceptAgreement(AcceptAgreementRequest) returns (AcceptAgreementReply);
@@ -80,6 +78,11 @@ message GetUnacceptedAgreementsRequest {
 
 message GetUnacceptedAgreementsReply {
   repeated int32 agreements = 1;
+}
+
+message ListAgreementsRequest {
+  int32 agreement_id = 1;
+  string text = 2;
 }
 
 message Agreement {
