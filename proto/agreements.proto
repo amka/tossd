@@ -55,14 +55,14 @@ message AcceptAgreementRequest {
   int32 agreement_id = 1;
   int32 version = 2;
   int64 user_id = 3;
-  int32 provider_id = 4;
+  optional int32 provider_id = 4;
 }
 
 message AcceptAgreementReply {
   int32 agreement_id = 1;
   int32 version = 2;
   int64 user_id = 3;
-  int32 provider_id = 4;
+  optional int32 provider_id = 4;
 }
 
 message DeleteAgreementRequest {

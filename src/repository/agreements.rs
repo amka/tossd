@@ -102,12 +102,46 @@ impl AgreementsRepository {
             .await
     }
 
+    /// Устанавливает флаг о принятии пользователем определённой Версии Соглашения.
+    ///
+    /// # Arguments
+    ///
+    /// * `db`: ссылка на подключение к БД
+    /// * `accept_request`: запрос на принятие Соглашения
+    ///
+    /// returns: Result<ActiveModel, DbErr>
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    ///  let conn = &self.connection;
+    ///
+    ///  match AgreementsRepository::accept_agreement(conn, accept_request.clone())
+    ///      .await {
+    ///      Ok(_) => {
+    ///          Ok(Response::new(AcceptAgreementReply {
+    ///              agreement_id: accept_request.agreement_id,
+    ///              version: accept_request.version,
+    ///              user_id: accept_request.user_id,
+    ///              provider_id: accept_request.provider_id,
+    ///          }))
+    ///      }
+    ///      Err(e) => {
+    ///          debug!("Accept agreement failed: {:?}", e);
+    ///          Err(Status::new(
+    ///              tonic::Code::Aborted,
+    ///              "Could not accept Agreement with id ".to_owned() +
+    ///                  &accept_request.agreement_id.to_string(),
+    ///          ))
+    ///      }
+    ///  }
+    /// ```
     pub async fn accept_agreement(db: &DbConn, accept_request: AcceptAgreementRequest)
                                   -> Result<agreement_acceptance_status::ActiveModel, DbErr> {
         debug!("AgreementsRepository::accept_agreement <- {:?}", accept_request);
         agreement_acceptance_status::ActiveModel {
             user_id: Set(accept_request.user_id),
-            provider_id: Set(accept_request.provider_id),
+            provider_id: Set(Option::from(accept_request.provider_id)),
             agreement_id: Set(accept_request.agreement_id),
             version: Set(accept_request.version),
             accepted: Set(true),
@@ -118,6 +152,28 @@ impl AgreementsRepository {
             .await
     }
 
+    /// Возвращает список идентификаторов Соглашений непринятых пользователем.
+    ///
+    /// Метод выбирает все Соглашения, для которых отсутствуют записи о принятии в таблице
+    /// `agreement_acceptance_status`.
+    ///
+    /// # Arguments
+    ///
+    /// * `db`: ссылка на подключение к БД
+    /// * `request`: запрос на поиск с указанием идентификаторов пользователя и провайдера (опционально).
+    ///
+    /// returns: Result<Vec<i32>, DbErr>
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    ///  let conn = &self.connection;
+    ///
+    ///  let agreements = AgreementsRepository::find_unaccepted(conn, unaccepted_request)
+    ///      .await
+    ///      .ok()
+    ///      .unwrap();
+    /// ```
     pub async fn find_unaccepted(db: &DbConn, request: GetUnacceptedAgreementsRequest) -> Result<Vec<i32>, DbErr> {
         debug!("AgreementsRepository::find_unaccepted <- {:?}", request);
 

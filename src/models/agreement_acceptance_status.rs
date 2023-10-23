@@ -10,7 +10,7 @@ pub struct Model {
     #[serde(skip_deserializing)]
     pub id: i32,
     pub user_id: i64,
-    pub provider_id: i32,
+    pub provider_id: Option<i32>,
     pub agreement_id: i32,
     pub version: i32,
     pub accepted: bool,

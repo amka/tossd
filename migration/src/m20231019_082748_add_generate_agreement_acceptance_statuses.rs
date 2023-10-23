@@ -19,7 +19,7 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(ColumnDef::new(AgreementAcceptanceStatus::UserId).big_integer().not_null())
-                    .col(ColumnDef::new(AgreementAcceptanceStatus::ProviderId).integer().not_null())
+                    .col(ColumnDef::new(AgreementAcceptanceStatus::ProviderId).integer().null())
                     .col(ColumnDef::new(AgreementAcceptanceStatus::AgreementId).integer().not_null())
                     .foreign_key(
                         ForeignKey::create()
