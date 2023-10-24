@@ -4,7 +4,7 @@ use tokio::sync::mpsc;
 use tonic::{Request, Response, Status};
 use tonic::codegen::tokio_stream::wrappers::ReceiverStream;
 
-use crate::agreements::{AcceptAgreementReply, AcceptAgreementRequest, Agreement, AgreementReply, AgreementVersion, AgreementVersionReply, CreateAgreementRequest, CreateVersionRequest, GetAgreementRequest, GetUnacceptedAgreementsReply, GetUnacceptedAgreementsRequest, GetVersionRequest, GetVersionsRequest, ListAgreementsRequest};
+use crate::agreements::{AcceptAgreementReply, AcceptAgreementRequest, Agreement, AgreementReply, AgreementVersion, AgreementVersionReply, CreateAgreementRequest, CreateVersionRequest, DeleteAgreementRequest, DeleteAgreementResponse, GetAgreementRequest, GetUnacceptedAgreementsReply, GetUnacceptedAgreementsRequest, GetVersionRequest, GetVersionsRequest, ListAgreementsRequest, UpdateAgreementRequest};
 use crate::agreements::agreement_service_server::AgreementService;
 use crate::repository::agreements::AgreementsRepository;
 
@@ -42,9 +42,10 @@ impl AgreementService for Agreementer {
             content: create_agreement.content,
             author_id: inserted_agreement.author_id.clone().unwrap(),
         };
-        let _ = AgreementsRepository::add_version(conn, create_version)
+        let inserted_version = AgreementsRepository::add_version(conn, create_version)
             .await
-            .ok();
+            .ok()
+            .unwrap();
 
         Ok(Response::new(AgreementReply {
             agreement: Some(Agreement {
@@ -55,7 +56,17 @@ impl AgreementService for Agreementer {
                 updated_at: inserted_agreement.updated_at.unwrap().timestamp(),
                 author_id: inserted_agreement.author_id.unwrap(),
                 deleted: inserted_agreement.deleted.unwrap(),
-            })
+            }),
+            version: Some(AgreementVersion {
+                id: inserted_version.id.unwrap(),
+                agreement_id: inserted_version.agreement_id.unwrap(),
+                version: inserted_version.version.unwrap(),
+                content: inserted_version.content.unwrap(),
+                created_at: inserted_version.created_at.unwrap().timestamp(),
+                updated_at: inserted_version.updated_at.unwrap().timestamp(),
+                author_id: inserted_version.author_id.unwrap(),
+                deleted: inserted_version.deleted.unwrap(),
+            }),
         }))
     }
     async fn create_agreement_version(&self, request: Request<CreateVersionRequest>)
@@ -92,6 +103,10 @@ impl AgreementService for Agreementer {
         if let Some(model) = AgreementsRepository::find_by_id(conn, id)
             .await
             .ok().unwrap() {
+            let _version = AgreementsRepository::find_version_by_agreement_id(conn, id)
+                .await
+                .ok().flatten().unwrap();
+
             let agreement = AgreementReply {
                 agreement: Some(Agreement {
                     id,
@@ -101,6 +116,16 @@ impl AgreementService for Agreementer {
                     updated_at: model.updated_at.timestamp(),
                     author_id: model.author_id,
                     deleted: model.deleted,
+                }),
+                version: Some(AgreementVersion {
+                    id: _version.id,
+                    agreement_id: _version.agreement_id,
+                    version: _version.version,
+                    content: _version.content,
+                    created_at: _version.created_at.timestamp(),
+                    updated_at: _version.updated_at.timestamp(),
+                    author_id: _version.author_id,
+                    deleted: _version.deleted,
                 }),
             };
 
@@ -178,9 +203,7 @@ impl AgreementService for Agreementer {
         Ok(Response::new(ReceiverStream::new(rx)))
     }
 
-
     type ListAgreementsStream = ReceiverStream<Result<AgreementReply, Status>>;
-
 
     async fn list_agreements(&self, request: Request<ListAgreementsRequest>) -> Result<Response<Self::ListAgreementsStream>, Status> {
         debug!("CALLED: get_agreement");
@@ -188,33 +211,40 @@ impl AgreementService for Agreementer {
         let conn = &self.connection;
         let request = request.into_inner();
 
-        let versions = AgreementsRepository::find_versions_by_agreement_id(conn, id)
-            .await
-            .ok().unwrap();
+        // let versions = AgreementsRepository::find_versions_by_agreement_id(conn, id)
+        //     .await
+        //     .ok().unwrap();
 
         let (tx, rx) = mpsc::channel(4);
 
-        tokio::spawn(async move {
-            for unwrapped in &versions[..] {
-                tx.send(Ok(AgreementReply {
-                    agreement: Agreement {
-                        id: 0,
-                        inner_title: unwrapped,
-                        public_title: "".to_string(),
-                        created_at: 0,
-                        updated_at: 0,
-                        author_id: 0,
-                        deleted: false,
-                    }
-                })).await.unwrap();
-            }
-
-            debug!(" /// done sending");
-        });
+        // tokio::spawn(async move {
+        //     for unwrapped in &versions[..] {
+        //         tx.send(Ok(AgreementReply {
+        //             agreement: Agreement {
+        //                 id: 0,
+        //                 inner_title: unwrapped,
+        //                 public_title: "".to_string(),
+        //                 created_at: 0,
+        //                 updated_at: 0,
+        //                 author_id: 0,
+        //                 deleted: false,
+        //             }
+        //         })).await.unwrap();
+        //     }
+        //
+        //     debug!(" /// done sending");
+        // });
 
         Ok(Response::new(ReceiverStream::new(rx)))
     }
 
+    async fn update_agreement(&self, request: Request<UpdateAgreementRequest>) -> Result<Response<AgreementReply>, Status> {
+        todo!()
+    }
+
+    async fn delete_agreement(&self, request: Request<DeleteAgreementRequest>) -> Result<Response<DeleteAgreementResponse>, Status> {
+        todo!()
+    }
 
     async fn accept_agreement(&self, request: Request<AcceptAgreementRequest>) -> Result<Response<AcceptAgreementReply>, Status> {
         let accept_request = request.into_inner();
@@ -223,16 +253,19 @@ impl AgreementService for Agreementer {
 
         match AgreementsRepository::accept_agreement(conn, accept_request.clone())
             .await {
-            Ok(_) => {
+            Ok(inserted) => {
                 Ok(Response::new(AcceptAgreementReply {
                     agreement_id: accept_request.agreement_id,
-                    version: accept_request.version,
+                    version: inserted.version.unwrap(),
                     user_id: accept_request.user_id,
                     provider_id: accept_request.provider_id,
                 }))
             }
             Err(e) => {
                 debug!("Accept agreement failed: {:?}", e);
+
+                // TODO: Добавить обработку разных ошибок!
+
                 Err(Status::new(
                     tonic::Code::Aborted,
                     "Could not accept Agreement with id ".to_owned() +
@@ -242,7 +275,7 @@ impl AgreementService for Agreementer {
         }
     }
 
-    async fn get_unaccepted_agreements(&self, request: Request<GetUnacceptedAgreementsRequest>) -> Result<Response<GetUnacceptedAgreementsReply>, Status> {
+    async fn get_unaccepted_agreement_ids(&self, request: Request<GetUnacceptedAgreementsRequest>) -> Result<Response<GetUnacceptedAgreementsReply>, Status> {
         let unaccepted_request = request.into_inner();
         let conn = &self.connection;
 

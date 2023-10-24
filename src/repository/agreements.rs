@@ -1,6 +1,5 @@
 use log::debug;
 use sea_orm::*;
-use sea_orm::sea_query::Query;
 
 use crate::agreements::{AcceptAgreementRequest, CreateAgreementRequest, CreateVersionRequest, GetUnacceptedAgreementsRequest};
 use crate::models::{agreement, agreement_acceptance_status, agreement_versions};
@@ -154,17 +153,33 @@ impl AgreementsRepository {
     pub async fn accept_agreement(db: &DbConn, accept_request: AcceptAgreementRequest)
                                   -> Result<agreement_acceptance_status::ActiveModel, DbErr> {
         debug!("AgreementsRepository::accept_agreement <- {:?}", accept_request);
-        agreement_acceptance_status::ActiveModel {
+
+        let tx = db.begin().await?;
+
+        let version: Option<i32> = agreement_versions::Entity::find()
+            .select_only()
+            .column_as(sea_query::Expr::col(agreement_versions::Column::Version).max().to_owned(), "version")
+            .filter(agreement_versions::Column::AgreementId.eq(accept_request.agreement_id))
+            .into_tuple()
+            .one(&tx)
+            .await
+            .unwrap();
+
+        let inserted = agreement_acceptance_status::ActiveModel {
             user_id: Set(accept_request.user_id),
             provider_id: Set(accept_request.provider_id),
             agreement_id: Set(accept_request.agreement_id),
-            version: Set(accept_request.version),
+            version: Set(version.unwrap()),
             accepted: Set(true),
             accepted_at: Set(chrono::Utc::now().naive_utc()),
             ..Default::default()
         }
-            .save(db)
-            .await
+            .save(&tx)
+            .await;
+
+        tx.commit().await?;
+
+        inserted
     }
 
     /// Возвращает список идентификаторов Соглашений непринятых пользователем.
@@ -196,7 +211,7 @@ impl AgreementsRepository {
             .select_only()
             .column(agreement::Column::Id)
             .filter(agreement::Column::Id.not_in_subquery(
-                Query::select()
+                sea_query::Query::select()
                     .column(agreement_acceptance_status::Column::AgreementId)
                     .from(agreement_acceptance_status::Entity)
                     .and_where(agreement_acceptance_status::Column::UserId.eq(request.user_id))
